@@ -1,0 +1,9 @@
+lunar.env.action_space -> todas las acciones de lunar
+lunar.env.action_space.n -> cuantas acciones hay
+lunar.env.action_space.sample() -> toma una acción (0, 1, 2, 3) aleatoria
+
+lunar.env.observation_space -> rangos de valores que pueden tomar los elementos de lunar
+lunar.env.observation_space.shape[0]  -> cuantas observaciones hay a tener en cuenta
+lunar.env.observation_space.low/high -> valores minimos/maximos de las observaciones
+lunar.env.observation_space.sample() -> toma una observacion aleatoria 
+(ej: [x: -2.1810508  y: -0.3552636  velX: -3.2600799  velY: -1.2271507   angulo: 4.075401   velAngular: -3.9396966  contactoI: 0.5986109   contactoD: 0.52247345])

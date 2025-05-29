@@ -1,0 +1,14 @@
+https://pythonprogramming.net/deep-q-learning-dqn-reinforcement-learning-python-tutorial/
+
+https://gymnasium.farama.org/api/env/
+
+https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf
+
+https://keras.io/api/models/model/
+
+https://keras.io/api/layers/base_layer/
+
+https://keras.io/api/layers/core_layers/dense/
+
+https://keras.io/api/layers/activations/
+

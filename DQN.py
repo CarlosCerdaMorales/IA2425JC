@@ -1,9 +1,9 @@
-# import numpy as np
-# import random
-# import time
+import numpy as np
+import random
+import time
 
 # import torch
-# import tensorflow as tf
+import tensorflow as tf
 
 from collections import deque
 
@@ -14,11 +14,17 @@ from lunar import LunarLanderEnv
 # https://www.nature.com/articles/nature14236 (Human level control through RL)
 # https://www.lesswrong.com/posts/kyvCNgx9oAwJCuevo/deep-q-networks-explained
 
-class DQN(torch.nn.Module/tf.keras.Model):
+class DQN(tf.keras.Model):
     def __init__(self, state_size, action_size, hidden_size):
-        pass
+        super(DQN, self).__init__()
+        self.oculta1 = tf.keras.layers.Dense(hidden_size, activation="relu", input_shape=(state_size,))
+        self.oculta2 = tf.keras.layers.Dense(hidden_size, activation="relu")
+        self.salida = tf.keras.layers.Dense(action_size, activation="sigmoid")
     
-    #puede requerir mas funciones segun la libreria escogida.
+    def call(self, inputs): # Función call requerida según https://keras.io/api/models/model/
+        res = self.oculta1(inputs)
+        res = self.oculta2(res)
+        return self.salida(res)
     
 class ReplayBuffer():
     def __init__(self, buffer_size=10000):
