@@ -117,10 +117,20 @@ class DQNAgent():
         it can be randomly sampled from the action space (based on epsilon) or
         it can be the action with the highest Q-value from the model.
         """
-        pass
-    
+        state = np.expand_dims(self.lunar.state, axis=0).astype(np.float32)
+        ## state = self.lunar.state
+        if np.random.rand() <= self.epsilon:
+            action = self.lunar.env.action_space.sample()  # Exploración
+        else:
+            state_tensor = tf.convert_to_tensor([state], dtype=tf.float32)  # Forma (1, state_size)
+            q_values = self.q_network(state_tensor)
+            action = tf.argmax(q_values[0]).numpy()  # Explotación
+
+
         next_state, reward, done = self.lunar.take_action(action, verbose=False)
-        
+
+        self.memory.push(state, action, reward, next_state, done)
+
         return next_state, reward, done, action
     
     def update_model(self):
@@ -130,13 +140,43 @@ class DQNAgent():
         and updates the model using the computed loss.
         """
         
+       # Si no hay suficientes muestras, no entrenar
+        if len(self.memory) < self.batch_size:
+            return None
+
+        # 1. Obtener batch aleatorio del buffer
         states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
-        
-        return loss
+
+        # 2. Convertir a tensores
+        states_tensor = tf.convert_to_tensor(states, dtype=tf.float32)
+        actions_tensor = tf.convert_to_tensor(actions, dtype=tf.int32)
+        rewards_tensor = tf.convert_to_tensor(rewards, dtype=tf.float32)
+        next_states_tensor = tf.convert_to_tensor(next_states, dtype=tf.float32)
+        dones_tensor = tf.convert_to_tensor(dones, dtype=tf.float32)
+
+        # 3. Calcular el target Q-value: Q_target = r + γ * max(Q(next_state))
+        next_q_values = self.target_network(next_states_tensor)
+        max_next_q_values = tf.reduce_max(next_q_values, axis=1)
+        q_targets = rewards_tensor + self.gamma * max_next_q_values * (1 - dones_tensor)
+
+        with tf.GradientTape() as tape:
+            # 4. Calcular los Q-values actuales para las acciones tomadas
+            q_values = self.q_network(states_tensor)
+            indices = tf.stack([tf.range(self.batch_size), actions_tensor], axis=1)
+            selected_q_values = tf.gather_nd(q_values, indices)
+
+            # 5. Calcular la pérdida (loss)
+            loss = tf.keras.losses.MSE(q_targets, selected_q_values)
+
+        # 6. Backpropagation y actualización de pesos
+        grads = tape.gradient(loss, self.q_network.trainable_variables)
+        self.optimizer.apply_gradients(zip(grads, self.q_network.trainable_variables))
+
+        return loss.numpy()
         
     def update_target_network(self):
         # copiar los pesos de la red q a la red objetivo
-        pass
+         self.target_network.set_weights(self.q_network.get_weights())
         
     def save_model(self, path):
         """
@@ -171,4 +211,38 @@ class DQNAgent():
         None
         """
         
-        pass
+        for episode in range(self.episodes):
+            state = self.lunar.reset()
+            total_reward = 0
+
+        for step in range(self.replays_per_episode):
+            # Elegir acción y realizarla
+            action = self.act()
+            next_state, reward, done = self.lunar.take_action(action, verbose=False)
+
+            # Almacenar en buffer
+            self.memory.push(state, action, reward, next_state, done)
+
+            # Entrenamiento
+            if len(self.memory) >= self.batch_size:
+                self.update_model()
+
+            state = next_state
+            total_reward += reward
+
+            if done:
+                break
+
+        # Decaimiento de epsilon
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
+
+        # Actualizar red objetivo periódicamente
+        if episode % self.target_updt_freq == 0:
+            self.update_target_network()
+
+        print(f"Episode {episode + 1}/{self.episodes} - Total Reward: {total_reward:.2f} - Epsilon: {self.epsilon:.4f}")
+
+        # Guardar el modelo al terminar
+        self.save_model("modelo_DQN.h5")
+        print("Modelo guardado en 'modelo_DQN.h5'")
