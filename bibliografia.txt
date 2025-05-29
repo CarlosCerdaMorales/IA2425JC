@@ -8,7 +8,25 @@ https://keras.io/api/models/model/
 
 https://keras.io/api/layers/base_layer/
 
-https://keras.io/api/layers/core_layers/dense/
+https://keras.io/2/api/layers/core_layers/dense/
 
 https://keras.io/api/layers/activations/
 
+https://keras.io/api/models/model_saving_apis/weights_saving_and_loading/
+
+https://www.youtube.com/watch?v=x83WmvbRa2I
+
+https://keras.io/api/optimizers/adam/
+
+
+
+
+Prompts IA:
+
+"Entiendo que para guardar el modelo, solo guardo el de mi red q que estoy actualizando. 
+Sin embargo, ¿por qué al hacer load, cargo en ambas redes?"
+
+"Teniendo en cuenta que la q-network contiene 8 entradas (las observaciones), 4 salidas (las acciones), 
+y dos capas intermedias, ¿cuántas neuronas crees que debería haber por cada capa?"
+
+"¿Qué optimizador de Keras crees que sería más efectivo?"

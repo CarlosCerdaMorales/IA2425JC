@@ -17,7 +17,7 @@ from lunar import LunarLanderEnv
 class DQN(tf.keras.Model):
     def __init__(self, state_size, action_size, hidden_size):
         super(DQN, self).__init__()
-        self.oculta1 = tf.keras.layers.Dense(hidden_size, activation="relu", input_shape=(state_size,))
+        self.oculta1 = tf.keras.layers.Dense(hidden_size, activation="relu", input_shape=(state_size,)) # explicado en https://keras.io/2/api/layers/core_layers/dense/
         self.oculta2 = tf.keras.layers.Dense(hidden_size, activation="relu")
         self.salida = tf.keras.layers.Dense(action_size, activation="sigmoid")
     
@@ -31,13 +31,13 @@ class ReplayBuffer():
         self.buffer = deque(maxlen=buffer_size) # deque es una doble cola que permite añadir y quitar elementos de ambos extremos
 
     def push(self, state, action, reward, next_state, done):
-        # insert into buffer
-        pass
+        self.buffer.append((state, action, reward, next_state, done))
         
     def sample(self, batch_size):
-        # get a batch of experiences from the buffer
-        pass
-    
+        batch = random.sample(self.buffer, batch_size)
+        states, actions, rewards, next_states, dones = map(np.array, zip(*batch))
+        return states, actions, rewards, next_states, dones
+
     def __len__(self):
         return len(self.buffer)
     
@@ -90,22 +90,24 @@ class DQNAgent():
         # de entrada igual al espacio de observaciones
         # y un numero de salida igual al espacio de acciones.
         # Asi como un numero de capas intermedias adecuadas.
+        hidden_size = 64
+        
         self.q_network = DQN(
             state_size=observation_space.shape[0],
             action_size=action_space.n,
-            hidden_size=0 #elegir un tamaño de capa oculta
+            hidden_size=hidden_size #elegir un tamaño de capa oculta
         )
         
         self.target_network = DQN(
             state_size=observation_space.shape[0],
             action_size=action_space.n,
-            hidden_size=0 #elegir un tamaño de capa oculta
+            hidden_size=hidden_size #elegir un tamaño de capa oculta
         )
         
         # Set weights of target network to be the same as those of the q network
-        self.target_network.
+        self.target_network.set_weights(self.q_network.get_weights())
       
-        self.optimizer = # depende del framework que uses (tf o pytorch)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate = self.learning_rate)
         
         print(f"QNetwork:\n {self.q_network}")
           
@@ -145,7 +147,7 @@ class DQNAgent():
         None
         """
         # guardar el modelo en el path indicado
-        pass
+        self.q_network.save_weights(path)
     
     def load_model(self, path):
         """
@@ -156,7 +158,7 @@ class DQNAgent():
         None
         """
         # cargar el modelo desde el path indicado
-        pass
+        self.q_network.load_weights(path)
         
     def train(self):
         """
