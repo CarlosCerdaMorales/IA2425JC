@@ -36,6 +36,11 @@ class ReplayBuffer():
     def sample(self, batch_size):
         batch = random.sample(self.buffer, batch_size)
         states, actions, rewards, next_states, dones = map(np.array, zip(*batch))
+        states = np.vstack(states).astype(np.float32)
+        next_states = np.vstack(next_states).astype(np.float32)
+        actions = np.array(actions, dtype=np.int32)
+        rewards = np.array(rewards, dtype=np.float32)
+        dones = np.array(dones, dtype=np.float32)
         return states, actions, rewards, next_states, dones
 
     def __len__(self):
@@ -45,7 +50,7 @@ class DQNAgent():
     def __init__(self, lunar: LunarLanderEnv, gamma=0.99, 
                 epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.01,
                 learning_rate=0.001, batch_size=64, 
-                memory_size=10000, episodes=1500, 
+                memory_size=10000, episodes=500, 
                 target_network_update_freq=10,
                 replays_per_episode=1000):
         """
@@ -117,20 +122,17 @@ class DQNAgent():
         it can be randomly sampled from the action space (based on epsilon) or
         it can be the action with the highest Q-value from the model.
         """
-        state = np.expand_dims(self.lunar.state, axis=0).astype(np.float32)
-        ## state = self.lunar.state
+        state_input = np.expand_dims(self.lunar.state, axis=0).astype(np.float32)
+
         if np.random.rand() <= self.epsilon:
             action = self.lunar.env.action_space.sample()  # Exploración
         else:
-            state_tensor = tf.convert_to_tensor([state], dtype=tf.float32)  # Forma (1, state_size)
-            q_values = self.q_network(state_tensor)
-            action = tf.argmax(q_values[0]).numpy()  # Explotación
-
+            q_values = self.q_network(state_input)
+            action = np.argmax(q_values[0].numpy())  # Explotación
 
         next_state, reward, done = self.lunar.take_action(action, verbose=False)
-
-        self.memory.push(state, action, reward, next_state, done)
-
+        self.memory.push(self.lunar.state, action, reward, next_state, done)
+        self.lunar.state = next_state
         return next_state, reward, done, action
     
     def update_model(self):
@@ -198,7 +200,13 @@ class DQNAgent():
         None
         """
         # cargar el modelo desde el path indicado
+        dummy_input = tf.convert_to_tensor(np.zeros((1, self.lunar.env.observation_space.shape[0])), dtype=tf.float32)
+        self.q_network(dummy_input)
+        self.target_network(dummy_input)
+
+        # Cargar los pesos
         self.q_network.load_weights(path)
+        self.target_network.load_weights(path)
         
     def train(self):
         """
@@ -215,34 +223,34 @@ class DQNAgent():
             state = self.lunar.reset()
             total_reward = 0
 
-        for step in range(self.replays_per_episode):
-            # Elegir acción y realizarla
-            action = self.act()
-            next_state, reward, done = self.lunar.take_action(action, verbose=False)
+            for step in range(self.replays_per_episode):
+                # Elegir acción y realizarla
+                next_state, reward, done, action = self.act()
+                next_state, reward, done = self.lunar.take_action(action, verbose=False)
 
-            # Almacenar en buffer
-            self.memory.push(state, action, reward, next_state, done)
+                # Almacenar en buffer
+                self.memory.push(state, action, reward, next_state, done)
 
-            # Entrenamiento
-            if len(self.memory) >= self.batch_size:
-                self.update_model()
+                # Entrenamiento
+                if len(self.memory) >= self.batch_size:
+                    self.update_model()
 
-            state = next_state
-            total_reward += reward
+                state = next_state
+                total_reward += reward
 
-            if done:
-                break
+                if done:
+                    break
 
-        # Decaimiento de epsilon
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+            # Decaimiento de epsilon
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
 
-        # Actualizar red objetivo periódicamente
-        if episode % self.target_updt_freq == 0:
-            self.update_target_network()
+            # Actualizar red objetivo periódicamente
+            if episode % self.target_updt_freq == 0:
+                self.update_target_network()
 
-        print(f"Episode {episode + 1}/{self.episodes} - Total Reward: {total_reward:.2f} - Epsilon: {self.epsilon:.4f}")
+            print(f"Episode {episode + 1}/{self.episodes} - Total Reward: {total_reward:.2f} - Epsilon: {self.epsilon:.4f}")
 
-        # Guardar el modelo al terminar
-        self.save_model("modelo_DQN.h5")
-        print("Modelo guardado en 'modelo_DQN.h5'")
+            # Guardar el modelo al terminar
+            self.save_model("modelo_DQN.weights.h5")
+            print("Modelo guardado en 'modelo_DQN.weights.h5'")
