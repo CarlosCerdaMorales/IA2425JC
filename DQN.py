@@ -50,7 +50,7 @@ class DQNAgent():
     def __init__(self, lunar: LunarLanderEnv, gamma=0.99, 
                 epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.01,
                 learning_rate=0.001, batch_size=64, 
-                memory_size=10000, episodes=500, 
+                memory_size=10000, episodes=1500, 
                 target_network_update_freq=10,
                 replays_per_episode=1000):
         """
@@ -132,7 +132,6 @@ class DQNAgent():
 
         next_state, reward, done = self.lunar.take_action(action, verbose=False)
         self.memory.push(self.lunar.state, action, reward, next_state, done)
-        self.lunar.state = next_state
         return next_state, reward, done, action
     
     def update_model(self):

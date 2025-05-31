@@ -18,6 +18,10 @@ https://www.youtube.com/watch?v=x83WmvbRa2I
 
 https://keras.io/api/optimizers/adam/
 
+https://ai.stackexchange.com/questions/20384/what-is-the-target-q-value-in-dqns
+
+https://www.youtube.com/playlist?list=PL58zEckBH8fCMIVzQCRSZVPUp3ZAVagWi
+
 
 
 
