@@ -251,5 +251,5 @@ class DQNAgent():
             print(f"Episode {episode + 1}/{self.episodes} - Total Reward: {total_reward:.2f} - Epsilon: {self.epsilon:.4f}")
 
             # Guardar el modelo al terminar
-            self.save_model("modelo_DQN.weights.h5")
-            print("Modelo guardado en 'modelo_DQN.weights.h5'")
+        self.save_model("modelo_DQN.weights.h5")
+        print("Modelo guardado en 'modelo_DQN.weights.h5'")
