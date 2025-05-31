@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import time
+import matplotlib.pyplot as plt
 
 # import torch
 import tensorflow as tf
@@ -50,7 +51,7 @@ class DQNAgent():
     def __init__(self, lunar: LunarLanderEnv, gamma=0.99, 
                 epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.01,
                 learning_rate=0.001, batch_size=64, 
-                memory_size=10000, episodes=1500, 
+                memory_size=10000, episodes=10, 
                 target_network_update_freq=10,
                 replays_per_episode=1000):
         """
@@ -95,7 +96,7 @@ class DQNAgent():
         # de entrada igual al espacio de observaciones
         # y un numero de salida igual al espacio de acciones.
         # Asi como un numero de capas intermedias adecuadas.
-        hidden_size = 64
+        hidden_size = 128
         
         self.q_network = DQN(
             state_size=observation_space.shape[0],
@@ -218,6 +219,10 @@ class DQNAgent():
         None
         """
         
+        rewards_per_episode_tot = np.zeros(self.episodes)
+        rewards_per_episode_pos = np.zeros(self.episodes)
+        epsilon_history = []
+
         for episode in range(self.episodes):
             state = self.lunar.reset()
             total_reward = 0
@@ -243,6 +248,7 @@ class DQNAgent():
             # Decaimiento de epsilon
             if self.epsilon > self.epsilon_min:
                 self.epsilon *= self.epsilon_decay
+                epsilon_history.append(self.epsilon)
 
             # Actualizar red objetivo periódicamente
             if episode % self.target_updt_freq == 0:
@@ -250,6 +256,24 @@ class DQNAgent():
 
             print(f"Episode {episode + 1}/{self.episodes} - Total Reward: {total_reward:.2f} - Epsilon: {self.epsilon:.4f}")
 
-            # Guardar el modelo al terminar
-        self.save_model("modelo_DQN.weights.h5")
-        print("Modelo guardado en 'modelo_DQN.weights.h5'")
+            rewards_per_episode_tot[episode] = total_reward
+            rewards_per_episode_pos[episode] = max(0, total_reward)
+
+        plt.figure(1)
+
+        sum_rewards_tot = np.zeros(self.episodes)
+        sum_rewards_pos = np.zeros(self.episodes)
+        for ep in range(self.episodes):
+            sum_rewards_tot[ep] = np.sum(rewards_per_episode_tot[max(0, ep-100):(ep+1)])
+            sum_rewards_pos[ep] = np.sum(rewards_per_episode_pos[max(0, ep-100):(ep+1)])
+        plt.subplot(131)
+        plt.plot(sum_rewards_tot)
+        plt.subplot(132)
+        plt.plot(sum_rewards_pos)
+        plt.subplot(133)
+        plt.plot(epsilon_history)
+        plt.savefig('ejemplo.png')
+
+        # Guardar el modelo al terminar
+        self.save_model("modelol10ep-128hid.weights.h5")
+        print("Modelo guardado en 'modelol10ep-128hid.weights.h5'")

@@ -22,6 +22,8 @@ https://ai.stackexchange.com/questions/20384/what-is-the-target-q-value-in-dqns
 
 https://www.youtube.com/playlist?list=PL58zEckBH8fCMIVzQCRSZVPUp3ZAVagWi
 
+https://github.com/johnnycode8/gym_solutions/blob/main/frozen_lake_dql.py
+
 
 
 
