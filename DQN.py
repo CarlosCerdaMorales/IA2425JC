@@ -20,7 +20,7 @@ class DQN(tf.keras.Model):
         super(DQN, self).__init__()
         self.oculta1 = tf.keras.layers.Dense(hidden_size, activation="relu", input_shape=(state_size,)) # explicado en https://keras.io/2/api/layers/core_layers/dense/
         self.oculta2 = tf.keras.layers.Dense(hidden_size, activation="relu")
-        self.salida = tf.keras.layers.Dense(action_size, activation="sigmoid")
+        self.salida = tf.keras.layers.Dense(action_size, activation="linear")
     
     def call(self, inputs): # Función call requerida según https://keras.io/api/models/model/
         res = self.oculta1(inputs)
@@ -51,7 +51,7 @@ class DQNAgent():
     def __init__(self, lunar: LunarLanderEnv, gamma=0.99, 
                 epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.01,
                 learning_rate=0.001, batch_size=64, 
-                memory_size=10000, episodes=10, 
+                memory_size=10000, episodes=3000, 
                 target_network_update_freq=10,
                 replays_per_episode=1000):
         """
@@ -73,8 +73,8 @@ class DQNAgent():
         # Initialize hyperparameters
         self.gamma = gamma
         self.epsilon = epsilon
-        self.epsilon_decay = epsilon_decay
-        self.epsilon_min = epsilon_min
+        self.epsilon_decay = 1/self.episodes
+        self.epsilon_min = 1/self.episodes
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.episodes = episodes
@@ -96,7 +96,7 @@ class DQNAgent():
         # de entrada igual al espacio de observaciones
         # y un numero de salida igual al espacio de acciones.
         # Asi como un numero de capas intermedias adecuadas.
-        hidden_size = 128
+        hidden_size = 64
         
         self.q_network = DQN(
             state_size=observation_space.shape[0],
@@ -247,7 +247,7 @@ class DQNAgent():
 
             # Decaimiento de epsilon
             if self.epsilon > self.epsilon_min:
-                self.epsilon *= self.epsilon_decay
+                self.epsilon = self.epsilon - self.epsilon_decay
                 epsilon_history.append(self.epsilon)
 
             # Actualizar red objetivo periódicamente
