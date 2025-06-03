@@ -49,7 +49,7 @@ class ReplayBuffer():
     
 class DQNAgent():
     def __init__(self, lunar: LunarLanderEnv, gamma=0.99, 
-                epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.01,
+                epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.3,
                 learning_rate=0.001, batch_size=64, 
                 memory_size=10000, episodes=3000, 
                 target_network_update_freq=10,
@@ -73,8 +73,8 @@ class DQNAgent():
         # Initialize hyperparameters
         self.gamma = gamma
         self.epsilon = epsilon
-        self.epsilon_decay = 1/self.episodes
-        self.epsilon_min = 1/self.episodes
+        self.epsilon_decay = 1/episodes
+        self.epsilon_min = epsilon_min
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.episodes = episodes
@@ -221,6 +221,8 @@ class DQNAgent():
         
         rewards_per_episode_tot = np.zeros(self.episodes)
         rewards_per_episode_pos = np.zeros(self.episodes)
+        sum_rewards_tot = np.zeros(self.episodes)
+        sum_rewards_pos = np.zeros(self.episodes)
         epsilon_history = []
 
         for episode in range(self.episodes):
@@ -258,14 +260,19 @@ class DQNAgent():
 
             rewards_per_episode_tot[episode] = total_reward
             rewards_per_episode_pos[episode] = max(0, total_reward)
+            sum_rewards_tot[episode] = np.sum(rewards_per_episode_tot[max(0, episode-100):(episode+1)])
+            sum_rewards_pos[episode] = np.sum(rewards_per_episode_pos[max(0, episode-100):(episode+1)])
+            
+            if(episode % 100 == 0):
+                self.save_model(f"modelol3000ep-64hid{episode}.weights.h5")
+                print(f"Modelo episodio {episode} guardado en modelol3000ep-64hid{episode}.weights.h5 con recompensa {sum_rewards_tot[episode]:.2f}")
 
         plt.figure(1)
 
-        sum_rewards_tot = np.zeros(self.episodes)
-        sum_rewards_pos = np.zeros(self.episodes)
-        for ep in range(self.episodes):
-            sum_rewards_tot[ep] = np.sum(rewards_per_episode_tot[max(0, ep-100):(ep+1)])
-            sum_rewards_pos[ep] = np.sum(rewards_per_episode_pos[max(0, ep-100):(ep+1)])
+        
+
+   
+
         plt.subplot(131)
         plt.plot(sum_rewards_tot)
         plt.subplot(132)
@@ -275,5 +282,5 @@ class DQNAgent():
         plt.savefig('ejemplo.png')
 
         # Guardar el modelo al terminar
-        self.save_model("modelol10ep-128hid.weights.h5")
-        print("Modelo guardado en 'modelol10ep-128hid.weights.h5'")
+        self.save_model("modelol3000ep-64hidfinal.weights.h5")
+        print("Modelo guardado en 'modelol3000ep-64hidfinal.weights.h5'")
