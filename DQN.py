@@ -269,10 +269,6 @@ class DQNAgent():
 
         plt.figure(1)
 
-        
-
-   
-
         plt.subplot(131)
         plt.plot(sum_rewards_tot)
         plt.subplot(132)
