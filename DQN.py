@@ -237,10 +237,6 @@ class DQNAgent():
                 # Almacenar en buffer
                 self.memory.push(state, action, reward, next_state, done)
 
-                # Entrenamiento
-                if len(self.memory) >= self.batch_size:
-                    self.update_model()
-
                 state = next_state
                 total_reward += reward
 
@@ -255,6 +251,9 @@ class DQNAgent():
             # Actualizar red objetivo periódicamente
             if episode % self.target_updt_freq == 0:
                 self.update_target_network()
+                # Entrenamiento
+                if len(self.memory) >= self.batch_size:
+                    self.update_model()
 
             print(f"Episode {episode + 1}/{self.episodes} - Total Reward: {total_reward:.2f} - Epsilon: {self.epsilon:.4f}")
 
