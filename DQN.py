@@ -142,13 +142,10 @@ class DQNAgent():
         and updates the model using the computed loss.
         """
         
- 
         if len(self.memory) < self.batch_size:
             return None
 
-
         states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
-
 
         states_tensor = tf.convert_to_tensor(states, dtype=tf.float32)
         actions_tensor = tf.convert_to_tensor(actions, dtype=tf.int32)
@@ -156,28 +153,23 @@ class DQNAgent():
         next_states_tensor = tf.convert_to_tensor(next_states, dtype=tf.float32)
         dones_tensor = tf.convert_to_tensor(dones, dtype=tf.float32)
 
-
         next_q_values = self.target_network(next_states_tensor)
         max_next_q_values = tf.reduce_max(next_q_values, axis=1)
         q_targets = rewards_tensor + self.gamma * max_next_q_values * (1 - dones_tensor)
 
-        with tf.GradientTape() as tape:
-            
+        with tf.GradientTape() as tape:            
             q_values = self.q_network(states_tensor)
             indices = tf.stack([tf.range(self.batch_size), actions_tensor], axis=1)
             selected_q_values = tf.gather_nd(q_values, indices)
 
-          
             loss = tf.keras.losses.MSE(q_targets, selected_q_values)
-
-        
+                
         grads = tape.gradient(loss, self.q_network.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.q_network.trainable_variables))
 
         return loss.numpy()
         
     def update_target_network(self):
-        
          self.target_network.set_weights(self.q_network.get_weights())
         
     def save_model(self, path):
@@ -199,11 +191,9 @@ class DQNAgent():
         Returns:
         None
         """
-       
         dummy_input = tf.convert_to_tensor(np.zeros((1, self.lunar.env.observation_space.shape[0])), dtype=tf.float32)
         self.q_network(dummy_input)
         self.target_network(dummy_input)
-
         
         self.q_network.load_weights(path)
         self.target_network.load_weights(path)
@@ -230,16 +220,10 @@ class DQNAgent():
             total_reward = 0
 
             for step in range(self.replays_per_episode):
-                
-                
-
-               
                 next_state, reward, done, action = self.act()
                 next_state, reward, done = self.lunar.take_action(action, verbose=False)
 
-                
                 self.memory.push(state, action, reward, next_state, done)
-
                 
                 if len(self.memory) >= self.batch_size:
                     self.update_model()
@@ -250,12 +234,10 @@ class DQNAgent():
                 if done:
                     break
 
-            
             if self.epsilon > self.epsilon_min:
                 self.epsilon = self.epsilon - self.epsilon_decay
                 epsilon_history.append(self.epsilon)
 
-           
             if episode % self.target_updt_freq == 0:
                 self.update_target_network()
 
@@ -280,6 +262,5 @@ class DQNAgent():
         plt.plot(epsilon_history)
         plt.savefig('Graficas-modelo.png')
 
-        
         self.save_model("modelo_DQN.weights.h5")
         print("Modelo guardado en 'modelo_DQN.weights.h5'")
