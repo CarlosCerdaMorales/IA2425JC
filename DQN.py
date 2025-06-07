@@ -142,42 +142,42 @@ class DQNAgent():
         and updates the model using the computed loss.
         """
         
-       # Si no hay suficientes muestras, no entrenar
+ 
         if len(self.memory) < self.batch_size:
             return None
 
-        # 1. Obtener batch aleatorio del buffer
+
         states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
 
-        # 2. Convertir a tensores
+
         states_tensor = tf.convert_to_tensor(states, dtype=tf.float32)
         actions_tensor = tf.convert_to_tensor(actions, dtype=tf.int32)
         rewards_tensor = tf.convert_to_tensor(rewards, dtype=tf.float32)
         next_states_tensor = tf.convert_to_tensor(next_states, dtype=tf.float32)
         dones_tensor = tf.convert_to_tensor(dones, dtype=tf.float32)
 
-        # 3. Calcular el target Q-value: Q_target = r + γ * max(Q(next_state))
+
         next_q_values = self.target_network(next_states_tensor)
         max_next_q_values = tf.reduce_max(next_q_values, axis=1)
         q_targets = rewards_tensor + self.gamma * max_next_q_values * (1 - dones_tensor)
 
         with tf.GradientTape() as tape:
-            # 4. Calcular los Q-values actuales para las acciones tomadas
+            
             q_values = self.q_network(states_tensor)
             indices = tf.stack([tf.range(self.batch_size), actions_tensor], axis=1)
             selected_q_values = tf.gather_nd(q_values, indices)
 
-            # 5. Calcular la pérdida (loss)
+          
             loss = tf.keras.losses.MSE(q_targets, selected_q_values)
 
-        # 6. Backpropagation y actualización de pesos
+        
         grads = tape.gradient(loss, self.q_network.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.q_network.trainable_variables))
 
         return loss.numpy()
         
     def update_target_network(self):
-        # copiar los pesos de la red q a la red objetivo
+        
          self.target_network.set_weights(self.q_network.get_weights())
         
     def save_model(self, path):
@@ -199,12 +199,12 @@ class DQNAgent():
         Returns:
         None
         """
-        # cargar el modelo desde el path indicado
+       
         dummy_input = tf.convert_to_tensor(np.zeros((1, self.lunar.env.observation_space.shape[0])), dtype=tf.float32)
         self.q_network(dummy_input)
         self.target_network(dummy_input)
 
-        # Cargar los pesos
+        
         self.q_network.load_weights(path)
         self.target_network.load_weights(path)
         
@@ -233,14 +233,14 @@ class DQNAgent():
                 
                 
 
-                # Elegir acción y realizarla
+               
                 next_state, reward, done, action = self.act()
                 next_state, reward, done = self.lunar.take_action(action, verbose=False)
 
-                # Almacenar en buffer
+                
                 self.memory.push(state, action, reward, next_state, done)
 
-                # Entrenamiento
+                
                 if len(self.memory) >= self.batch_size:
                     self.update_model()
 
@@ -250,12 +250,12 @@ class DQNAgent():
                 if done:
                     break
 
-            # Decaimiento de epsilon
+            
             if self.epsilon > self.epsilon_min:
                 self.epsilon = self.epsilon - self.epsilon_decay
                 epsilon_history.append(self.epsilon)
 
-            # Actualizar red objetivo periódicamente
+           
             if episode % self.target_updt_freq == 0:
                 self.update_target_network()
 
@@ -267,8 +267,8 @@ class DQNAgent():
             sum_rewards_pos[episode] = np.sum(rewards_per_episode_pos[max(0, episode-100):(episode+1)])
             
             if(episode % 100 == 0):
-                self.save_model(f"modelol3000ep-64hid{episode}.weights.h5")
-                print(f"Modelo episodio {episode} guardado en modelol3000ep-64hid{episode}.weights.h5 con recompensa {sum_rewards_tot[episode]:.2f}")
+                self.save_model(f"modelo_DQN{episode}.weights.h5")
+                print(f"Modelo episodio {episode} guardado en modelol_DQN{episode}.weights.h5 con recompensa {sum_rewards_tot[episode]:.2f}")
 
         plt.figure(1)
 
@@ -278,8 +278,8 @@ class DQNAgent():
         plt.plot(sum_rewards_pos)
         plt.subplot(133)
         plt.plot(epsilon_history)
-        plt.savefig('ejemplo.png')
+        plt.savefig('Graficas-modelo.png')
 
-        # Guardar el modelo al terminar
-        self.save_model("modelol3000ep-64hidfinal.weights.h5")
-        print("Modelo guardado en 'modelol3000ep-64hidfinal.weights.h5'")
+        
+        self.save_model("modelo_DQN.weights.h5")
+        print("Modelo guardado en 'modelo_DQN.weights.h5'")
